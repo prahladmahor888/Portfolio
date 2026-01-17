@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+Sitemap: http://localhost/Portfolio/sitemap.xml.php
+
+# Disallow admin area
+Disallow: /admin/
+
+# Disallow sensitive directories
+Disallow: /config/
+Disallow: /app/
+Disallow: /database/
+Disallow: /storage/

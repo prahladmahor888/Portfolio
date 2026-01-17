@@ -1,0 +1,126 @@
+# Security & URL Rewriting Rules
+
+# Prevent directory browsing
+Options -Indexes
+
+# Follow symbolic links
+Options +FollowSymLinks
+
+# Enable rewrite engine
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # NOTE: RewriteBase is removed to allow relative paths to work in any subfolder or root.
+    
+    # Force HTTPS (uncomment in production if needed)
+    # RewriteCond %{HTTPS} off
+    # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+    
+    # Sitemap rewrite - serve sitemap.xml.php as sitemap.xml
+    RewriteRule ^sitemap\.xml$ sitemap.xml.php [L]
+    
+    # Remove trailing slash
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)/$ $1 [L,R=301]
+
+    # Remove .php extension (External Redirect)
+    # This captures the full request URI to ensure correct redirect path
+    RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s([^.]+)\.php [NC]
+    RewriteRule ^ %1 [R=301,L]
+
+    # Rewrite to .php if file exists (Internal Rewrite)
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME}.php -f
+    RewriteRule ^(.*?)/?$ $1.php [L]
+
+    # Remove .html extension (External Redirect)
+    RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s([^.]+)\.html [NC]
+    RewriteRule ^ %1 [R=301,L]
+
+    # Rewrite to .html if file exists (Internal Rewrite)
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME}.html -f
+    RewriteRule ^(.*?)/?$ $1.html [L]
+
+    # Custom 404 Handler (Universal)
+    # If the request is not a file, and not a directory, and hasn't been rewritten yet
+    # Rewrite to error page. 
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ public/error.php [L]
+</IfModule>
+
+# Universal Error Documents (500, 403, etc.)
+# NOTE: Choose the block that matches your environment.
+
+# --- OPTION 1: PRODUCTION / LIVE DOMAIN (Commented out for Localhost debugging) ---
+# ErrorDocument 500 /public/error.php
+# ErrorDocument 403 /public/error.php
+# ErrorDocument 400 /public/error.php
+# ErrorDocument 401 /public/error.php
+
+# --- OPTION 2: LOCALHOST (Active for Localhost) ---
+ErrorDocument 500 /Portfolio/public/error.php
+ErrorDocument 403 /Portfolio/public/error.php
+ErrorDocument 400 /Portfolio/public/error.php
+ErrorDocument 401 /Portfolio/public/error.php
+
+# Security Headers
+<IfModule mod_headers.c>
+    # Prevent clickjacking
+    Header always set X-Frame-Options "SAMEORIGIN"
+    
+    # XSS Protection
+    Header always set X-XSS-Protection "1; mode=block"
+    
+    # Prevent MIME sniffing
+    Header always set X-Content-Type-Options "nosniff"
+    
+    # Referrer Policy
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Protect sensitive files
+<FilesMatch "^(config|database|auth)\.php$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Protect .env files
+<FilesMatch "^\.env">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Block access to directories
+RedirectMatch 404 /\.git
+RedirectMatch 404 /storage/
+RedirectMatch 404 /app/
+RedirectMatch 404 /config/
+RedirectMatch 404 /database/
+
+# PHP Settings
+<IfModule mod_php.c>
+    php_value upload_max_filesize 5M
+    php_value post_max_size 6M
+    php_value max_execution_time 300
+    php_value max_input_time 300
+</IfModule>
+
+# Compression
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript
+</IfModule>
+
+# Browser Caching
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType application/pdf "access plus 1 month"
+</IfModule>
