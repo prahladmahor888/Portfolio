@@ -139,14 +139,14 @@ include __DIR__ . '/includes/navbar.php';
         <div class="section-header" data-aos="fade-up">
             <h2 class="section-title">About Me</h2>
         </div>
-        <div class="grid grid-2" data-aos="fade-up" data-aos-delay="200">
-            <div class="glass-card">
-                <p class="text-lg">
-                    <?php echo clean($settings['about_bio'] ?? 'Passionate developer creating innovative solutions.'); ?>
+        <div class="grid grid-2" data-aos="fade-up" data-aos-delay="200" style="align-items: start;">
+            <div class="glass-card" style="height: fit-content; align-self: start;">
+                <p class="text-lg" style="line-height: 1.8; margin-bottom: 1.5rem;">
+                    <?php echo getBioPreview($settings['about_bio'] ?? 'Passionate developer creating innovative solutions.', 220); ?>
                 </p>
-                <a href="public/about.php" class="btn btn-primary mt-2">Learn More →</a>
+                <a href="public/about.php" class="btn btn-primary">Learn More →</a>
             </div>
-            <div>
+            <div style="height: fit-content; align-self: start;">
                 <?php if (!empty($skillsByCategory)): ?>
                     <?php $count = 0; foreach ($skillsByCategory as $category => $skills): ?>
                         <?php if ($count++ >= 2) break; ?>

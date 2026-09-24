@@ -4,7 +4,7 @@
 -- Create default admin user
 -- Password: Admin@123 (hashed with PHP password_hash)
 INSERT INTO `users` (`name`, `email`, `password`, `role`) VALUES
-('Admin User', 'admin@portfolio.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin');
+('Prahlad Mahour', 'prahladmahor888@gmail.com', '$2y$10$O5wDvsi.uNdVg9OGqporpexxLQgDaORiM0kRu8S5bpWdFT16Ao9Ai', 'admin');
 
 -- Insert default site settings
 INSERT INTO `settings` (`setting_key`, `setting_value`, `setting_type`) VALUES

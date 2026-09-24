@@ -4,15 +4,89 @@
  * Main configuration file for the portfolio website
  */
 
+// Directory Paths
+define('ROOT_PATH', dirname(__DIR__));
+define('APP_PATH', ROOT_PATH . '/app');
+define('CONFIG_PATH', ROOT_PATH . '/config');
+define('PUBLIC_PATH', ROOT_PATH . '/public');
+define('ASSETS_PATH', ROOT_PATH . '/assets');
+define('UPLOADS_PATH', ASSETS_PATH . '/uploads');
+define('INCLUDES_PATH', ROOT_PATH . '/includes');
+
+/**
+ * Load environment variables from .env file
+ * @param string $path
+ * @return bool
+ */
+function loadEnv($path) {
+    if (!file_exists($path) || !is_readable($path)) {
+        return false;
+    }
+
+    $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        $line = trim($line);
+        
+        // Skip comments and empty lines
+        if ($line === '' || strpos($line, '#') === 0) {
+            continue;
+        }
+
+        if (strpos($line, '=') !== false) {
+            list($key, $value) = explode('=', $line, 2);
+            $key = trim($key);
+            $value = trim($value);
+
+            // Strip quotes
+            if ((substr($value, 0, 1) === '"' && substr($value, -1) === '"') ||
+                (substr($value, 0, 1) === "'" && substr($value, -1) === "'")) {
+                $value = substr($value, 1, -1);
+            }
+
+            // Set in environment
+            putenv("$key=$value");
+            $_ENV[$key] = $value;
+            $_SERVER[$key] = $value;
+        }
+    }
+    return true;
+}
+
+/**
+ * Get environment variable with fallback
+ * @param string $key
+ * @param mixed $default
+ * @return mixed
+ */
+function env($key, $default = null) {
+    $val = getenv($key);
+    if ($val === false) {
+        $val = $_ENV[$key] ?? $_SERVER[$key] ?? $default;
+    }
+    
+    if (is_string($val)) {
+        $lower = strtolower($val);
+        if ($lower === 'true' || $lower === '(true)') return true;
+        if ($lower === 'false' || $lower === '(false)') return false;
+        if ($lower === 'null' || $lower === '(null)') return null;
+        if ($lower === 'empty' || $lower === '(empty)') return '';
+    }
+
+    return $val ?? $default;
+}
+
+// Load .env from root directory
+loadEnv(ROOT_PATH . '/.env');
+
 // Environment (development or production)
-define('APP_ENV', 'development');
+define('APP_ENV', env('APP_ENV', 'development'));
 
 // Database Configuration
-define('DB_HOST', 'localhost:3307');
-define('DB_NAME', 'portfolio_db');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_CHARSET', 'utf8mb4');
+define('DB_HOST', env('DB_HOST', 'localhost:3306'));
+define('DB_NAME', env('DB_NAME', 'portfolio_db'));
+define('DB_USER', env('DB_USER', 'root'));
+define('DB_PASS', env('DB_PASS', 'Admin@123'));
+define('DB_CHARSET', env('DB_CHARSET', 'utf8mb4'));
 
 // Site Configuration
 // Determine protocol (supports HTTPS and common reverse proxy headers)
@@ -28,32 +102,26 @@ if (
 $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
 // Automatically detect if running on localhost (subdirectory) or production (root)
 $path = ($host === 'localhost' || $host === '127.0.0.1') ? '/Portfolio' : '';
-define('SITE_URL', $protocol . '://' . $host . $path);
-define('ADMIN_URL', SITE_URL . '/admin');
+$autoSiteUrl = $protocol . '://' . $host . $path;
 
-// Directory Paths
-define('ROOT_PATH', dirname(__DIR__));
-define('APP_PATH', ROOT_PATH . '/app');
-define('CONFIG_PATH', ROOT_PATH . '/config');
-define('PUBLIC_PATH', ROOT_PATH . '/public');
-define('ASSETS_PATH', ROOT_PATH . '/assets');
-define('UPLOADS_PATH', ASSETS_PATH . '/uploads');
-define('INCLUDES_PATH', ROOT_PATH . '/includes');
+$configuredSiteUrl = env('SITE_URL');
+define('SITE_URL', !empty($configuredSiteUrl) ? rtrim($configuredSiteUrl, '/') : $autoSiteUrl);
+define('ADMIN_URL', SITE_URL . '/admin');
 
 // URL Paths
 define('ASSETS_URL', SITE_URL . '/assets');
 define('UPLOADS_URL', ASSETS_URL . '/uploads');
 
 // Session Configuration
-define('SESSION_NAME', 'portfolio_session');
-define('SESSION_LIFETIME', 7200); // 2 hours
+define('SESSION_NAME', env('SESSION_NAME', 'portfolio_session'));
+define('SESSION_LIFETIME', (int)env('SESSION_LIFETIME', 7200)); // 2 hours
 
 // Security
 define('CSRF_TOKEN_NAME', 'csrf_token');
-define('PASSWORD_MIN_LENGTH', 8);
+define('PASSWORD_MIN_LENGTH', (int)env('PASSWORD_MIN_LENGTH', 8));
 
 // Upload Configuration
-define('MAX_FILE_SIZE', 5 * 1024 * 1024); // 5MB
+define('MAX_FILE_SIZE', (int)env('MAX_FILE_SIZE', 5 * 1024 * 1024)); // 5MB
 define('ALLOWED_IMAGE_TYPES', ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp']);
 define('ALLOWED_DOCUMENT_TYPES', ['application/pdf']);
 
@@ -62,11 +130,11 @@ define('ITEMS_PER_PAGE', 12);
 define('BLOG_PER_PAGE', 10);
 
 // Email Configuration (for contact form)
-define('CONTACT_EMAIL', 'admin@portfolio.com');
-define('EMAIL_FROM_NAME', 'Portfolio Contact Form');
+define('CONTACT_EMAIL', env('CONTACT_EMAIL', 'admin@portfolio.com'));
+define('EMAIL_FROM_NAME', env('EMAIL_FROM_NAME', 'Portfolio Contact Form'));
 
 // Timezone
-date_default_timezone_set('Asia/Kolkata');
+date_default_timezone_set(env('APP_TIMEZONE', 'Asia/Kolkata'));
 
 // Error Reporting
 if (APP_ENV === 'development') {

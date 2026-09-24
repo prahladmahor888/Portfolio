@@ -118,6 +118,89 @@ function truncate($text, $length = 100, $suffix = '...') {
 }
 
 /**
+ * Render formatted bio text safely supporting basic markdown and formatting
+ * @param string $text
+ * @return string
+ */
+function renderFormattedBio($text) {
+    if (empty($text)) {
+        return '';
+    }
+    
+    // Remove standalone '## About Me' or '# About Me' if present at start
+    $text = preg_replace('/^#+\s*About\s*Me\s*/i', '', trim($text));
+    
+    // Escape HTML first for XSS safety
+    $escaped = htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
+    
+    // Convert Markdown bold **text** or raw tags &lt;b&gt;text&lt;/b&gt; / &lt;strong&gt;
+    $escaped = preg_replace('/\*\*(.*?)\*\*/s', '<strong>$1</strong>', $escaped);
+    $escaped = preg_replace('/&lt;b&gt;(.*?)&lt;\/b&gt;/si', '<strong>$1</strong>', $escaped);
+    $escaped = preg_replace('/&lt;strong&gt;(.*?)&lt;\/strong&gt;/si', '<strong>$1</strong>', $escaped);
+    
+    // Convert Markdown italic *text* or &lt;i&gt; / &lt;em&gt;
+    $escaped = preg_replace('/\*([^\*]+)\*/s', '<em>$1</em>', $escaped);
+    $escaped = preg_replace('/&lt;i&gt;(.*?)&lt;\/i&gt;/si', '<em>$1</em>', $escaped);
+    $escaped = preg_replace('/&lt;em&gt;(.*?)&lt;\/em&gt;/si', '<em>$1</em>', $escaped);
+    
+    // Convert Markdown headings like ### Heading
+    $escaped = preg_replace('/^###\s*(.*?)$/m', '<h4 style="margin: 1.2rem 0 0.5rem 0; font-size: 1.1rem; color: var(--color-text);">$1</h4>', $escaped);
+    $escaped = preg_replace('/^##\s*(.*?)$/m', '<h3 style="margin: 1.5rem 0 0.75rem 0; font-size: 1.25rem; color: var(--color-text);">$1</h3>', $escaped);
+    
+    // Split into paragraphs by double newlines
+    $paragraphs = preg_split('/\n\s*\n/', $escaped);
+    $output = [];
+    foreach ($paragraphs as $para) {
+        $para = trim($para);
+        if ($para !== '') {
+            if (preg_match('/^<h[1-6]/', $para)) {
+                $output[] = $para;
+            } else {
+                $output[] = '<p style="margin-bottom: 1rem; line-height: 1.8;">' . nl2br($para) . '</p>';
+            }
+        }
+    }
+    
+    return implode("\n", $output);
+}
+
+/**
+ * Get clean short preview of bio for home card
+ * @param string $text
+ * @param int $length
+ * @return string
+ */
+function getBioPreview($text, $length = 220) {
+    if (empty($text)) {
+        return '';
+    }
+    
+    // Strip leading header like '## About Me'
+    $text = preg_replace('/^#+\s*About\s*Me\s*/i', '', trim($text));
+    
+    // Strip markdown formatting & HTML tags for clean text preview
+    $text = preg_replace('/\*\*(.*?)\*\*/', '$1', $text);
+    $text = preg_replace('/\*([^\*]+)\*/', '$1', $text);
+    $text = strip_tags(html_entity_decode($text, ENT_QUOTES, 'UTF-8'));
+    
+    // Clean whitespace
+    $text = preg_replace('/\s+/', ' ', trim($text));
+    
+    if (mb_strlen($text) <= $length) {
+        return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
+    }
+    
+    // Truncate at word boundary
+    $truncated = mb_substr($text, 0, $length);
+    $lastSpace = mb_strrpos($truncated, ' ');
+    if ($lastSpace !== false && $lastSpace > ($length * 0.7)) {
+        $truncated = mb_substr($truncated, 0, $lastSpace);
+    }
+    
+    return htmlspecialchars($truncated . '...', ENT_QUOTES, 'UTF-8');
+}
+
+/**
  * Redirect to URL
  * @param string $url
  * @param int $statusCode

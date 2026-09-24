@@ -1,0 +1,19 @@
+# Environment Configuration
+.env
+.env.local
+.env.*.local
+
+# Logs
+storage/logs/*
+!storage/logs/.gitkeep
+*.log
+
+# Uploads
+assets/uploads/*
+!assets/uploads/.gitkeep
+
+# IDE / OS files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

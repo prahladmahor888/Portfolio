@@ -52,23 +52,22 @@ include __DIR__ . '/../includes/navbar.php';
             <div class="blog-meta-large">
                 <span>📅 <?php echo formatDate($blog['created_at'], 'F d, Y'); ?></span>
                 <span>•</span>
-                <span>👁️ <?php echo number_format($blog['views']); ?> views</span>
-                <?php if ($blog['reading_time']): ?>
-                            <span><i class="far fa-clock"></i> <?php 
-                                $rt = isset($blog['reading_time']) ? $blog['reading_time'] : 0;
-                                if(!$rt) $rt = ceil(str_word_count(strip_tags($blog['content'] ?? '')) / 200);
-                                echo $rt; 
-                            ?> min read</span>
-                <?php endif; ?>
+                <span>👁️ <?php echo number_format($blog['views'] ?? 0); ?> views</span>
+                <span>•</span>
+                <span>⏱️ <?php 
+                    $rt = !empty($blog['reading_time']) ? (int)$blog['reading_time'] : max(1, (int)ceil(str_word_count(strip_tags($blog['content'] ?? '')) / 200));
+                    echo $rt; 
+                ?> min read</span>
             </div>
             
-            <?php if ($blog['tags']): ?>
+            <?php if (!empty($blog['tags'])): ?>
                 <div class="blog-tags-large">
                     <?php
-                    $tags = array_map('trim', explode(',', $blog['tags']));
+                    $tags = array_filter(array_map('trim', explode(',', $blog['tags'])));
                     foreach ($tags as $tag):
+                        if (empty($tag)) continue;
                     ?>
-                        <span class="blog-tag-large">#<?php echo clean($tag); ?></span>
+                        <span class="blog-tag-large">#<?php echo clean(ltrim($tag, '#')); ?></span>
                     <?php endforeach; ?>
                 </div>
             <?php endif; ?>

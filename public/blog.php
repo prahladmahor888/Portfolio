@@ -79,13 +79,14 @@ include __DIR__ . '/../includes/navbar.php';
                                 <p class="blog-excerpt"><?php echo clean(truncate(strip_tags($blog['content']), 150)); ?></p>
                             <?php endif; ?>
                             
-                            <?php if ($blog['tags']): ?>
+                            <?php if (!empty($blog['tags'])): ?>
                                 <div class="blog-tags">
                                     <?php
-                                    $tags = array_map('trim', explode(',', $blog['tags']));
+                                    $tags = array_filter(array_map('trim', explode(',', $blog['tags'])));
                                     foreach (array_slice($tags, 0, 3) as $tag):
+                                        if (empty($tag)) continue;
                                     ?>
-                                        <span class="blog-tag">#<?php echo clean($tag); ?></span>
+                                        <span class="blog-tag">#<?php echo clean(ltrim($tag, '#')); ?></span>
                                     <?php endforeach; ?>
                                 </div>
                             <?php endif; ?>
